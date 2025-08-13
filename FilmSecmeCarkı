@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Film Kulübü - Haftalık Film Seçici</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        html {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        html::-webkit-scrollbar {
+            display: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transform: translateZ(0);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .input-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .json-input {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .json-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .load-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .load-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .wheel-section {
+            text-align: center;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto 30px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #2c3e50;
+            position: relative;
+            transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            padding: 10px;
+            text-align: center;
+            line-height: 1.2;
+            overflow: hidden;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #ff6b6b;
+            z-index: 10;
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .spin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .spin-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-notification {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(46, 204, 113, 0.4);
+            position: relative;
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .result-notification h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .result-notification .movie-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .result-notification .suggester {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .example {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .example h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .example code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            display: block;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 20px;
+            }
+            
+            .input-section {
+                margin: 0 auto;
+                max-width: 100%;
+            }
+            
+            .wheel-section {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Film Kulübü</h1>
+            <p>Haftalık Film Seçici Çarkı</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2>📝 Film Önerilerini Yükle</h2>
+                <textarea 
+                    class="json-input" 
+                    id="jsonInput" 
+                    placeholder="Film önerilerinizi JSON formatında buraya yapıştırın..."
+                ></textarea>
+                <button class="load-btn" onclick="loadMovies()">Filmleri Yükle</button>
+                
+
+            </div>
+            
+            <div class="wheel-section">
+                <div class="wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel" id="wheel">
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #7f8c8d; font-size: 18px;">
+                            Önce filmleri yükleyin
+                        </div>
+                    </div>
+                </div>
+                <button class="spin-btn" id="spinBtn" onclick="spinWheel()" disabled>
+                    🎯 Çarkı Çevir!
+                </button>
+                
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Center overlay notification -->
+    <div class="result-overlay" id="resultOverlay" style="display: none;">
+        <div class="result-notification">
+            <h3>🏆 Bu Haftanın Filmi</h3>
+            <div class="movie-title" id="selectedMovie"></div>
+            <div class="suggester">Öneren: <span id="selectedSuggester"></span></div>
+            <button class="close-btn" onclick="closeResult()">✕</button>
+        </div>
+    </div>
+
+    <script>
+        let movies = [];
+        let isSpinning = false;
+
+        function loadMovies() {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+            
+            if (!jsonInput) {
+                alert('Lütfen JSON verisi girin!');
+                return;
+            }
+
+            try {
+                const parsedMovies = JSON.parse(jsonInput);
+                
+                if (!Array.isArray(parsedMovies) || parsedMovies.length === 0) {
+                    alert('JSON verisi bir dizi olmalı ve en az bir film içermeli!');
+                    return;
+                }
+
+                // Validate movie structure
+                for (let movie of parsedMovies) {
+                    if (!movie.film || !movie.oneren) {
+                        alert('Her film objesi "film" ve "oneren" alanlarına sahip olmalı!');
+                        return;
+                    }
+                }
+
+                movies = parsedMovies;
+                createWheel();
+                document.getElementById('spinBtn').disabled = false;
+                document.getElementById('resultOverlay').style.display = 'none';
+                
+            } catch (error) {
+                alert('Geçersiz JSON formatı! Lütfen formatı kontrol edin.');
+            }
+        }
+
+        function createWheel() {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '';
+            
+            const segmentAngle = 360 / movies.length;
+            const colors = [
+                '#e74c3c', '#3498db', '#2ecc71', '#f39c12', 
+                '#9b59b6', '#1abc9c', '#e67e22', '#34495e',
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4',
+                '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'
+            ];
+
+            // Create SVG wheel for better segment rendering
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 400 400');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+
+            const centerX = 200;
+            const centerY = 200;
+            const radius = 180;
+
+            movies.forEach((movie, index) => {
+                const startAngle = (index * segmentAngle - 90) * (Math.PI / 180);
+                const endAngle = ((index + 1) * segmentAngle - 90) * (Math.PI / 180);
+                
+                const x1 = centerX + radius * Math.cos(startAngle);
+                const y1 = centerY + radius * Math.sin(startAngle);
+                const x2 = centerX + radius * Math.cos(endAngle);
+                const y2 = centerY + radius * Math.sin(endAngle);
+                
+                const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+                
+                const pathData = [
+                    `M ${centerX} ${centerY}`,
+                    `L ${x1} ${y1}`,
+                    `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                    'Z'
+                ].join(' ');
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', colors[index % colors.length]);
+                path.setAttribute('stroke', '#fff');
+                path.setAttribute('stroke-width', '2');
+                
+                svg.appendChild(path);
+                
+                // Add text
+                const textAngle = (index + 0.5) * segmentAngle - 90;
+                const textRadius = radius * 0.7;
+                const textX = centerX + textRadius * Math.cos(textAngle * Math.PI / 180);
+                const textY = centerY + textRadius * Math.sin(textAngle * Math.PI / 180);
+                
+                const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                textGroup.setAttribute('transform', `translate(${textX}, ${textY}) rotate(${textAngle + 90})`);
+                
+                // Movie title
+                const movieText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                movieText.setAttribute('text-anchor', 'middle');
+                movieText.setAttribute('dominant-baseline', 'middle');
+                movieText.setAttribute('fill', 'white');
+                movieText.setAttribute('font-weight', 'bold');
+                movieText.setAttribute('font-size', movies.length > 8 ? '11' : '13');
+                movieText.setAttribute('y', '-5');
+                movieText.textContent = movie.film.length > 20 ? movie.film.substring(0, 17) + '...' : movie.film;
+                
+                // Suggester name
+                const suggesterText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                suggesterText.setAttribute('text-anchor', 'middle');
+                suggesterText.setAttribute('dominant-baseline', 'middle');
+                suggesterText.setAttribute('fill', 'white');
+                suggesterText.setAttribute('font-size', movies.length > 8 ? '9' : '11');
+                suggesterText.setAttribute('y', '8');
+                suggesterText.setAttribute('opacity', '0.9');
+                suggesterText.textContent = movie.oneren;
+                
+                textGroup.appendChild(movieText);
+                textGroup.appendChild(suggesterText);
+                svg.appendChild(textGroup);
+            });
+            
+            wheel.appendChild(svg);
+        }
+
+        function spinWheel() {
+            if (isSpinning || movies.length === 0) return;
+            
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('resultOverlay').style.display = 'none';
+            
+            const wheel = document.getElementById('wheel');
+            const segmentAngle = 360 / movies.length;
+            
+            // Random rotation between 2520 and 3600 degrees (7-10 full rotations)
+            const minRotation = 2520;
+            const maxRotation = 3600;
+            const randomRotation = Math.random() * (maxRotation - minRotation) + minRotation;
+            
+            // Calculate which segment will be selected
+            const normalizedRotation = randomRotation % 360;
+            const selectedIndex = Math.floor((360 - normalizedRotation) / segmentAngle) % movies.length;
+            
+            wheel.style.transform = `rotate(${randomRotation}deg)`;
+            
+            setTimeout(() => {
+                const selectedMovie = movies[selectedIndex];
+                document.getElementById('selectedMovie').textContent = selectedMovie.film;
+                document.getElementById('selectedSuggester').textContent = selectedMovie.oneren;
+                document.getElementById('resultOverlay').style.display = 'flex';
+                
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+            }, 6000);
+        }
+
+        // Load example data on page load
+        window.onload = function() {
+            const exampleData = [
+                {"film": "The Shawshank Redemption", "oneren": "Ahmet Yılmaz"},
+                {"film": "Pulp Fiction", "oneren": "Ayşe Demir"},
+                {"film": "The Godfather", "oneren": "Mehmet Kaya"},
+                {"film": "Schindler's List", "oneren": "Fatma Özkan"},
+                {"film": "Forrest Gump", "oneren": "Can Arslan"},
+                {"film": "Inception", "oneren": "Zeynep Aktaş"}
+            ];
+            
+            document.getElementById('jsonInput').value = JSON.stringify(exampleData, null, 2);
+        };
+
+        function closeResult() {
+            document.getElementById('resultOverlay').style.display = 'none';
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96e8bdffa7df9f39',t:'MTc1NTA5MzY2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
